@@ -695,10 +695,16 @@
                             const entityData = inputsToRestore[entityKey];
                             if (typeof entityData === 'object') {
                                 for (const fieldKey in entityData) {
-                                    const flatId = `input_${entityKey}_${fieldKey}`;
-                                    const input = document.getElementById(flatId);
-                                    if (input && (!input.value || input.value === '0.00' || input.value === '')) {
-                                        input.value = entityData[fieldKey];
+                                    // Split fieldKey like 'sales_base' into 'sales' and 'base'
+                                    const parts = fieldKey.split('_');
+                                    if (parts.length >= 2) {
+                                        const type = parts[0]; // sales or purchases
+                                        const field = parts.slice(1).join('_'); // base, vat, or total
+                                        const flatId = `input_${entityKey}_${type}_${field}`;
+                                        const input = document.getElementById(flatId);
+                                        if (input && (!input.value || input.value === '0.00' || input.value === '')) {
+                                            input.value = entityData[fieldKey];
+                                        }
                                     }
                                 }
                             }
