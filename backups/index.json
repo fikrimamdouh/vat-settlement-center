@@ -5,8 +5,14 @@
       "label": "2025-07-16",
       "year": "2025",
       "quarter": "3"
+    },
+    {
+      "filename": "polaris_backup_2025-Q3.polaris.json",
+      "label": "الربع الثالث 2025",
+      "year": "2025",
+      "quarter": "3"
     }
   ],
-  "generated_at": "2025-10-17 21:34:07",
-  "total_count": 1
+  "generated_at": "2025-10-17 21:46:08",
+  "total_count": 2
 }
