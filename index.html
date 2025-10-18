@@ -68,6 +68,7 @@
                      <option value="">تحميل نسخة احتياطية محفوظة</option>
                  </select>
                  <button class="btn btn-outline-secondary" id="export-btn"><i class="fas fa-download me-2"></i>تصدير البيانات</button>
+                 <button class="btn btn-outline-danger" id="clear-btn"><i class="fas fa-trash-alt me-2"></i>تصفير الربع</button>
             </div>
         </div>
         
@@ -788,6 +789,36 @@
     document.getElementById('export-btn').addEventListener('click', exportData);
     document.getElementById('import-btn').addEventListener('click', () => document.getElementById('file-input').click());
     document.getElementById('file-input').addEventListener('change', importData);
+    
+    // Clear quarter button
+    document.getElementById('clear-btn').addEventListener('click', function() {
+        if (!confirm('هل أنت متأكد من تصفير جميع بيانات هذا الربع?\n\nسيتم حذف جميع البيانات المدخلة والمحفوظة!')) {
+            return;
+        }
+        
+        // Clear all inputs
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            if (!input.disabled) {
+                input.value = '0.00';
+            }
+        });
+        
+        // Remove all new entities
+        document.querySelectorAll('.new-entity-card').forEach(card => {
+            card.remove();
+        });
+        
+        // Clear localStorage for current quarter
+        const year = document.getElementById('year-select').value;
+        const quarter = document.getElementById('quarter-select').value;
+        const storageKey = `vat_data_${year}_Q${quarter}`;
+        localStorage.removeItem(storageKey);
+        
+        // Recalculate
+        calculateAll();
+        
+        alert('تم تصفير بيانات الربع بنجاح!');
+    });
 
     document.getElementById('saveEntityBtn').addEventListener('click', () => {
         const form = document.getElementById('addEntityForm');
