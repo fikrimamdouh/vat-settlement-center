@@ -528,14 +528,111 @@
         setTimeout(() => window.print(), 200);
     }
 
-    function exportData() {
+
+    // --- Auto-save functionality ---
+    let autoSaveTimer = null;
+    
+    function autoSave() {
+        const year = document.getElementById('year-select').value;
+        const quarter = document.getElementById('quarter-select').value;
+        const key = `vat_data_${year}_${quarter}`;
+        
         const data = {
             inputs: {},
-            newEntities: []
+            newEntities: [],
+            return: {}
         };
+        
+        // حفظ جميع المدخلات
         document.querySelectorAll('input.data-input, input.return-input').forEach(input => {
             if (input.value && input.id) {
                 data.inputs[input.id] = input.value;
+            }
+        });
+        
+        // حفظ بيانات الإقرار
+        document.querySelectorAll('input.return-input').forEach(input => {
+            if (input.value && input.id) {
+                data.return[input.id] = input.value;
+            }
+        });
+        
+        // حفظ الكيانات الجديدة
+        document.querySelectorAll('.new-entity-card').forEach(card => {
+            const entityData = {
+                name: card.querySelector('.pane-title').textContent,
+                vat: card.querySelector('.fw-bold').textContent,
+                id: card.dataset.entityId
+            };
+            data.newEntities.push(entityData);
+        });
+        
+        // حفظ البيانات في localStorage
+        localStorage.setItem(key, JSON.stringify(data));
+        console.log('تم الحفظ التلقائي:', key);
+    }
+    
+    function scheduleAutoSave() {
+        if (autoSaveTimer) clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(autoSave, 2000); // حفظ بعد ثانيتين من آخر تغيير
+    }
+    
+    function loadAutoSavedData() {
+        const year = document.getElementById('year-select').value;
+        const quarter = document.getElementById('quarter-select').value;
+        const key = `vat_data_${year}_${quarter}`;
+        
+        const savedData = localStorage.getItem(key);
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                
+                // استعادة الكيانات الجديدة
+                if (data.newEntities) {
+                    document.querySelectorAll('.new-entity-card').forEach(card => card.remove());
+                    data.newEntities.forEach(entityData => {
+                        addNewEntity(entityData.name, entityData.vat, entityData.id);
+                    });
+                }
+                
+                // استعادة المدخلات
+                if (data.inputs) {
+                    for (const id in data.inputs) {
+                        const input = document.getElementById(id);
+                        if (input) {
+                            input.value = data.inputs[id];
+                        }
+                    }
+                }
+                
+                calculateAll();
+                console.log('تم تحميل البيانات المحفوظة تلقائياً:', key);
+            } catch (error) {
+                console.error('خطأ في تحميل البيانات المحفوظة:', error);
+            }
+        }
+    }
+
+    function exportData() {
+        const year = document.getElementById('year-select').value;
+        const quarter = document.getElementById('quarter-select').value;
+        const key = `vat_data_${year}_${quarter}`;
+        
+        const data = {
+            inputs: {},
+            newEntities: [],
+            return: {}
+        };
+        
+        document.querySelectorAll('input.data-input').forEach(input => {
+            if (input.value && input.id) {
+                data.inputs[input.id] = input.value;
+            }
+        });
+        
+        document.querySelectorAll('input.return-input').forEach(input => {
+            if (input.value && input.id) {
+                data.return[input.id] = input.value;
             }
         });
         
@@ -548,12 +645,16 @@
             data.newEntities.push(entityData);
         });
         
-        const dataStr = JSON.stringify(data, null, 2);
+        // تنسيق polaris.json الجديد
+        const polarisFormat = {};
+        polarisFormat[key] = JSON.stringify(data);
+        
+        const dataStr = JSON.stringify(polarisFormat, null, 2);
         const dataBlob = new Blob([dataStr], {type: "application/json"});
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
         const date = new Date().toISOString().slice(0, 10);
-        link.download = `vat_backup_${date}.json`;
+        link.download = `polaris_backup_${date}.polaris.json`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
@@ -567,14 +668,88 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                const data = JSON.parse(e.target.result);
+                const rawData = JSON.parse(e.target.result);
                 
-                document.querySelectorAll('.new-entity-card').forEach(card => card.remove());
+                // التحقق من نوع الملف - هل هو polaris.json الجديد أم النسخة القديمة
+                const isNewFormat = rawData.hasOwnProperty('vat_data_2025_Q1') || 
+                                   rawData.hasOwnProperty('vat_data_2025_Q2') ||
+                                   Object.keys(rawData).some(key => key.startsWith('vat_data_'));
+                
+                if (isNewFormat) {
+                    // معالجة النسخة الجديدة من polaris.json
+                    const year = document.getElementById('year-select').value;
+                    const quarter = document.getElementById('quarter-select').value;
+                    const key = `vat_data_${year}_${quarter}`;
+                    
+                    if (rawData[key]) {
+                        // البيانات موجودة كـ string مشفر داخل JSON
+                        const data = typeof rawData[key] === 'string' ? 
+                                    JSON.parse(rawData[key]) : rawData[key];
+                        
+                        // دمج البيانات بدلاً من استبدالها
+                        mergeImportedData(data);
+                    } else {
+                        alert(`لا توجد بيانات للسنة ${year} والربع ${quarter} في الملف المستورد.`);
+                        return;
+                    }
+                } else {
+                    // معالجة النسخة القديمة من الملف
+                    mergeImportedData(rawData);
+                }
+                
+                calculateAll();
+                autoSave(); // حفظ بعد الاستيراد
+                alert('تم استيراد ودمج البيانات بنجاح!');
+            } catch (error) {
+                alert('خطأ في قراءة الملف. الرجاء التأكد من أنه ملف نسخة احتياطية صحيح.');
+                console.error("Import error:", error);
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = null;
+    }
+    
+    function mergeImportedData(data) {
+        // دمج الكيانات الجديدة (إضافة فقط الكيانات غير الموجودة)
+        if (data.newEntities) {
+            const existingEntityIds = Array.from(document.querySelectorAll('.new-entity-card'))
+                                           .map(card => card.dataset.entityId);
+            
+            data.newEntities.forEach(entityData => {
+                if (!existingEntityIds.includes(entityData.id)) {
+                    addNewEntity(entityData.name, entityData.vat, entityData.id);
+                }
+            });
+        }
 
-                if (data.newEntities) {
-                    data.newEntities.forEach(entityData => {
-                        addNewEntity(entityData.name, entityData.vat, entityData.id);
-                    });
+        // دمج المدخلات (تحديث القيم الموجودة وإضافة الجديدة)
+        const inputsToRestore = data.inputs || data.mainInputs;
+        if (inputsToRestore) {
+            for (const id in inputsToRestore) {
+                const input = document.getElementById(id);
+                if (input) {
+                    // دمج القيم: إذا كانت القيمة الحالية فارغة، استخدم القيمة المستوردة
+                    if (!input.value || input.value === '0.00' || input.value === '') {
+                        input.value = inputsToRestore[id];
+                    } else {
+                        // يمكن إضافة منطق أكثر تعقيداً هنا إذا لزم الأمر
+                        // حالياً: الاحتفاظ بالقيمة الموجودة إذا كانت غير فارغة
+                        // أو يمكن السؤال عن الاستبدال
+                    }
+                }
+            }
+        }
+        
+        // دمج بيانات الإقرار
+        if (data.return) {
+            for (const id in data.return) {
+                const input = document.getElementById(id);
+                if (input && (!input.value || input.value === '0.00' || input.value === '')) {
+                    input.value = data.return[id];
+                }
+            }
+        }
+    });
                 }
 
                 const inputsToRestore = data.inputs || data.mainInputs;
@@ -642,7 +817,10 @@
     }
 
     // --- EVENT LISTENERS ---
-    document.body.addEventListener('change', handleInputChange);
+    document.body.addEventListener('change', function(e) {
+        handleInputChange(e);
+        scheduleAutoSave();
+    });
     document.getElementById('export-btn').addEventListener('click', exportData);
     document.getElementById('import-btn').addEventListener('click', () => document.getElementById('file-input').click());
     document.getElementById('file-input').addEventListener('change', importData);
@@ -663,10 +841,15 @@
     });
 
 
+
+    document.getElementById('year-select').addEventListener('change', loadAutoSavedData);
+    document.getElementById('quarter-select').addEventListener('change', loadAutoSavedData);
+
     // --- INITIALIZATION ---
     populateYears();
     buildInputTable();
     buildOfficialReturnTable();
+    loadAutoSavedData(); // تحميل البيانات المحفوظة تلقائياً
     calculateAll();
 </script>
 </body>
