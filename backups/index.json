@@ -1,24 +1,12 @@
 {
   "backups": [
     {
-      "filename": "polaris_backup_2025-07-16.polaris.json",
-      "label": "2025-07-16",
-      "year": "2025",
-      "quarter": "3"
-    },
-    {
       "filename": "polaris_backup_2025-Q2.polaris.json",
       "label": "الربع الثاني 2025",
       "year": "2025",
       "quarter": "2"
-    },
-    {
-      "filename": "polaris_backup_2025-Q3.polaris.json",
-      "label": "الربع الثالث 2025",
-      "year": "2025",
-      "quarter": "3"
     }
   ],
-  "generated_at": "2025-10-17 21:48:27",
-  "total_count": 3
+  "generated_at": "2025-10-17 21:49:32",
+  "total_count": 1
 }
