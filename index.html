@@ -808,17 +808,28 @@
     // --- Load saved backups from server ---
     async function loadSavedBackups() {
         const backupSelect = document.getElementById('backup-select');
-        const backupFiles = [
-            'polaris_backup_2025-07-16.polaris.json'
-            // Add more backup files here
-        ];
         
-        backupFiles.forEach(filename => {
-            const option = document.createElement('option');
-            option.value = `backups/${filename}`;
-            option.textContent = filename.replace('.polaris.json', '').replace('polaris_backup_', '');
-            backupSelect.appendChild(option);
-        });
+        try {
+            // Load backup list from index.json
+            const response = await fetch('backups/index.json');
+            if (!response.ok) throw new Error('Failed to load backup list');
+            
+            const data = await response.json();
+            const backups = data.backups || [];
+            
+            backups.forEach(backup => {
+                const option = document.createElement('option');
+                option.value = `backups/${backup.filename}`;
+                option.textContent = backup.label || backup.filename.replace('.polaris.json', '').replace('polaris_backup_', '');
+                option.dataset.year = backup.year;
+                option.dataset.quarter = backup.quarter;
+                backupSelect.appendChild(option);
+            });
+            
+            console.log(`✅ تم تحميل ${backups.length} نسخة احتياطية`);
+        } catch (error) {
+            console.error('خطأ في تحميل قائمة النسخ الاحتياطية:', error);
+        }
     }
     
     // Handle backup selection
