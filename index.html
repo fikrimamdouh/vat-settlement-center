@@ -695,7 +695,7 @@
                             const entityData = inputsToRestore[entityKey];
                             if (typeof entityData === 'object') {
                                 for (const fieldKey in entityData) {
-                                    const flatId = `${entityKey}-${fieldKey}`.replace(/_/g, '-');
+                                    const flatId = `input_${entityKey}_${fieldKey}`;
                                     const input = document.getElementById(flatId);
                                     if (input && (!input.value || input.value === '0.00' || input.value === '')) {
                                         input.value = entityData[fieldKey];
@@ -917,7 +917,7 @@
                         const entityData = inputsToRestore[entityKey];
                         if (typeof entityData === 'object') {
                             for (const fieldKey in entityData) {
-                                const flatId = `${entityKey}-${fieldKey}`.replace(/_/g, '-');
+                                const flatId = `input_${entityKey}_${fieldKey}`;
                                 const input = document.getElementById(flatId);
                                 if (input) {
                                     input.value = entityData[fieldKey];
