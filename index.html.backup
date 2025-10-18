@@ -61,12 +61,9 @@
     <main class="main-content">
         <div class="page-header">
             <h1 class="page-title">مركز تسوية القيمة المضافة</h1>
-            <div class="d-flex gap-2 align-items-center">
+            <div class="d-flex gap-2">
                  <button class="btn btn-outline-secondary" id="add-entity-btn" data-bs-toggle="modal" data-bs-target="#addEntityModal"><i class="fas fa-plus-circle me-2"></i>إضافة كيان مستقل</button>
                  <button class="btn btn-outline-secondary" id="import-btn"><i class="fas fa-upload me-2"></i>استيراد البيانات</button>
-                 <select class="form-select" id="backup-select" style="width: auto; max-width: 300px;">
-                     <option value="">تحميل نسخة احتياطية محفوظة</option>
-                 </select>
                  <button class="btn btn-outline-secondary" id="export-btn"><i class="fas fa-download me-2"></i>تصدير البيانات</button>
             </div>
         </div>
@@ -531,84 +528,7 @@
         setTimeout(() => window.print(), 200);
     }
 
-
-    // === Auto-save functionality ===
-    let autoSaveTimer = null;
-    
-    function autoSave() {
-        const year = document.getElementById('year-select').value;
-        const quarter = document.getElementById('quarter-select').value;
-        const key = `vat_data_${year}_${quarter}`;
-        
-        const data = {
-            inputs: {},
-            newEntities: [],
-            return: {}
-        };
-        
-        document.querySelectorAll('input.data-input, input.return-input').forEach(input => {
-            if (input.value && input.id) {
-                data.inputs[input.id] = input.value;
-            }
-        });
-        
-        document.querySelectorAll('.new-entity-card').forEach(card => {
-            const entityData = {
-                name: card.querySelector('.pane-title').textContent,
-                vat: card.querySelector('.fw-bold').textContent,
-                id: card.dataset.entityId
-            };
-            data.newEntities.push(entityData);
-        });
-        
-        localStorage.setItem(key, JSON.stringify(data));
-        console.log('✅ Auto-saved:', key);
-    }
-    
-    function scheduleAutoSave() {
-        if (autoSaveTimer) clearTimeout(autoSaveTimer);
-        autoSaveTimer = setTimeout(autoSave, 2000);
-    }
-    
-    function loadAutoSavedData() {
-        const year = document.getElementById('year-select').value;
-        const quarter = document.getElementById('quarter-select').value;
-        const key = `vat_data_${year}_${quarter}`;
-        
-        const savedData = localStorage.getItem(key);
-        if (savedData) {
-            try {
-                const data = JSON.parse(savedData);
-                
-                if (data.newEntities) {
-                    document.querySelectorAll('.new-entity-card').forEach(card => card.remove());
-                    data.newEntities.forEach(entityData => {
-                        addNewEntity(entityData.name, entityData.vat, entityData.id);
-                    });
-                }
-                
-                if (data.inputs) {
-                    for (const id in data.inputs) {
-                        const input = document.getElementById(id);
-                        if (input) {
-                            input.value = data.inputs[id];
-                        }
-                    }
-                }
-                
-                calculateAll();
-                console.log('✅ Auto-loaded:', key);
-            } catch (error) {
-                console.error('Auto-load error:', error);
-            }
-        }
-    }
-
     function exportData() {
-        const year = document.getElementById('year-select').value;
-        const quarter = document.getElementById('quarter-select').value;
-        const key = `vat_data_${year}_${quarter}`;
-        
         const data = {
             inputs: {},
             newEntities: []
@@ -628,15 +548,12 @@
             data.newEntities.push(entityData);
         });
         
-        const polarisFormat = {};
-        polarisFormat[key] = JSON.stringify(data);
-        
-        const dataStr = JSON.stringify(polarisFormat, null, 2);
+        const dataStr = JSON.stringify(data, null, 2);
         const dataBlob = new Blob([dataStr], {type: "application/json"});
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
         const date = new Date().toISOString().slice(0, 10);
-        link.download = `polaris_backup_${date}.polaris.json`;
+        link.download = `vat_backup_${date}.json`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
@@ -650,82 +567,29 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                const rawData = JSON.parse(e.target.result);
+                const data = JSON.parse(e.target.result);
                 
-                // Check if new polaris.json format
-                const isNewFormat = Object.keys(rawData).some(key => key.startsWith('vat_data_'));
-                
-                let data;
-                if (isNewFormat) {
-                    const year = document.getElementById('year-select').value;
-                    const quarter = document.getElementById('quarter-select').value;
-                    const key = `vat_data_${year}_${quarter}`;
-                    
-                    if (rawData[key]) {
-                        data = typeof rawData[key] === 'string' ? JSON.parse(rawData[key]) : rawData[key];
-                    } else {
-                        alert(`لا توجد بيانات للسنة ${year} والربع ${quarter} في الملف.`);
-                        return;
-                    }
-                } else {
-                    data = rawData;
-                }
-                
-                // Merge entities
-                const existingIds = Array.from(document.querySelectorAll('.new-entity-card')).map(c => c.dataset.entityId);
+                document.querySelectorAll('.new-entity-card').forEach(card => card.remove());
+
                 if (data.newEntities) {
                     data.newEntities.forEach(entityData => {
-                        if (!existingIds.includes(entityData.id)) {
-                            addNewEntity(entityData.name, entityData.vat, entityData.id);
-                        }
+                        addNewEntity(entityData.name, entityData.vat, entityData.id);
                     });
                 }
 
-                // Merge inputs
                 const inputsToRestore = data.inputs || data.mainInputs;
+
                 if (inputsToRestore) {
-                    // Check if nested format (factory: {sales_base: ...})
-                    const firstKey = Object.keys(inputsToRestore)[0];
-                    const isNestedFormat = firstKey && typeof inputsToRestore[firstKey] === 'object' && !Array.isArray(inputsToRestore[firstKey]);
-                    
-                    if (isNestedFormat) {
-                        // Convert nested format to flat format
-                        for (const entityKey in inputsToRestore) {
-                            const entityData = inputsToRestore[entityKey];
-                            if (typeof entityData === 'object') {
-                                for (const fieldKey in entityData) {
-                                    const flatId = `${entityKey}-${fieldKey}`.replace(/_/g, '-');
-                                    const input = document.getElementById(flatId);
-                                    if (input && (!input.value || input.value === '0.00' || input.value === '')) {
-                                        input.value = entityData[fieldKey];
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // Flat format
-                        for (const id in inputsToRestore) {
-                            const input = document.getElementById(id);
-                            if (input && (!input.value || input.value === '0.00' || input.value === '')) {
-                                input.value = inputsToRestore[id];
-                            }
-                        }
-                    }
-                }
-                
-                // Merge return data
-                if (data.return) {
-                    for (const id in data.return) {
+                    for (const id in inputsToRestore) {
                         const input = document.getElementById(id);
-                        if (input && (!input.value || input.value === '0.00' || input.value === '')) {
-                            input.value = data.return[id];
+                        if (input) {
+                            input.value = inputsToRestore[id];
                         }
                     }
                 }
 
                 calculateAll();
-                autoSave();
-                alert('تم استيراد ودمج البيانات بنجاح!');
+                alert('تم استيراد البيانات بنجاح!');
             } catch (error) {
                 alert('خطأ في قراءة الملف. الرجاء التأكد من أنه ملف نسخة احتياطية صحيح.');
                 console.error("Import error:", error);
@@ -778,13 +642,7 @@
     }
 
     // --- EVENT LISTENERS ---
-    document.body.addEventListener('change', function(e) {
-        handleInputChange(e);
-        scheduleAutoSave();
-    });
-    
-    document.getElementById('year-select').addEventListener('change', loadAutoSavedData);
-    document.getElementById('quarter-select').addEventListener('change', loadAutoSavedData);
+    document.body.addEventListener('change', handleInputChange);
     document.getElementById('export-btn').addEventListener('click', exportData);
     document.getElementById('import-btn').addEventListener('click', () => document.getElementById('file-input').click());
     document.getElementById('file-input').addEventListener('change', importData);
@@ -805,122 +663,10 @@
     });
 
 
-    // --- Load saved backups from server ---
-    async function loadSavedBackups() {
-        const backupSelect = document.getElementById('backup-select');
-        const backupFiles = [
-            'polaris_backup_2025-07-16.polaris.json'
-            // Add more backup files here
-        ];
-        
-        backupFiles.forEach(filename => {
-            const option = document.createElement('option');
-            option.value = `backups/${filename}`;
-            option.textContent = filename.replace('.polaris.json', '').replace('polaris_backup_', '');
-            backupSelect.appendChild(option);
-        });
-    }
-    
-    // Handle backup selection
-    document.getElementById('backup-select').addEventListener('change', async function(e) {
-        const backupPath = e.target.value;
-        if (!backupPath) return;
-        
-        try {
-            const response = await fetch(backupPath);
-            if (!response.ok) throw new Error('Failed to load backup');
-            
-            const rawData = await response.json();
-            
-            // Check if new polaris.json format
-            const isNewFormat = Object.keys(rawData).some(key => key.startsWith('vat_data_'));
-            
-            let data;
-            if (isNewFormat) {
-                const year = document.getElementById('year-select').value;
-                const quarter = document.getElementById('quarter-select').value;
-                const key = `vat_data_${year}_Q${quarter}`;
-                
-                if (rawData[key]) {
-                    data = typeof rawData[key] === 'string' ? JSON.parse(rawData[key]) : rawData[key];
-                } else {
-                    alert(`لا توجد بيانات للسنة ${year} والربع ${quarter} في الملف.`);
-                    e.target.value = '';
-                    return;
-                }
-            } else {
-                data = rawData;
-            }
-            
-            // Merge entities
-            const existingIds = Array.from(document.querySelectorAll('.new-entity-card')).map(c => c.dataset.entityId);
-            if (data.newEntities) {
-                data.newEntities.forEach(entityData => {
-                    if (!existingIds.includes(entityData.id)) {
-                        addNewEntity(entityData.name, entityData.vat, entityData.id);
-                    }
-                });
-            }
-
-            // Merge inputs
-            const inputsToRestore = data.inputs || data.mainInputs;
-            if (inputsToRestore) {
-                // Check if nested format (factory: {sales_base: ...})
-                const firstKey = Object.keys(inputsToRestore)[0];
-                const isNestedFormat = firstKey && typeof inputsToRestore[firstKey] === 'object' && !Array.isArray(inputsToRestore[firstKey]);
-                
-                if (isNestedFormat) {
-                    // Convert nested format to flat format
-                    for (const entityKey in inputsToRestore) {
-                        const entityData = inputsToRestore[entityKey];
-                        if (typeof entityData === 'object') {
-                            for (const fieldKey in entityData) {
-                                const flatId = `${entityKey}-${fieldKey}`.replace(/_/g, '-');
-                                const input = document.getElementById(flatId);
-                                if (input) {
-                                    input.value = entityData[fieldKey];
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // Flat format
-                    for (const id in inputsToRestore) {
-                        const input = document.getElementById(id);
-                        if (input) {
-                            input.value = inputsToRestore[id];
-                        }
-                    }
-                }
-            }
-            
-            // Merge return data
-            if (data.return) {
-                for (const id in data.return) {
-                    const input = document.getElementById(id);
-                    if (input) {
-                        input.value = data.return[id];
-                    }
-                }
-            }
-
-            calculateAll();
-            autoSave();
-            alert('تم تحميل النسخة الاحتياطية بنجاح!');
-            e.target.value = '';
-        } catch (error) {
-            alert('خطأ في تحميل النسخة الاحتياطية.');
-            console.error('Backup load error:', error);
-            e.target.value = '';
-        }
-    });
-
     // --- INITIALIZATION ---
     populateYears();
     buildInputTable();
     buildOfficialReturnTable();
-    loadSavedBackups();
-    loadAutoSavedData();
     calculateAll();
 </script>
 </body>
