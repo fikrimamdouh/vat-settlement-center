@@ -1,0 +1,126 @@
+{
+  "inputs": {
+    "factory": {
+      "sales_base": "1394764.87",
+      "sales_tax": "209214.73",
+      "sales_total": "1603979.60",
+      "purchases_base": "1411326.20",
+      "purchases_tax": "211698.93",
+      "purchases_total": "1623025.13",
+      "net_tax": "-2484.20"
+    },
+    "blocks": {
+      "sales_base": "0.00",
+      "sales_tax": "0.00",
+      "sales_total": "0.00",
+      "purchases_base": "0.00",
+      "purchases_tax": "0.00",
+      "purchases_total": "0.00",
+      "net_tax": "0.00"
+    },
+    "concrete": {
+      "sales_base": "0.00",
+      "sales_tax": "0.00",
+      "sales_total": "0.00",
+      "purchases_base": "0.00",
+      "purchases_tax": "0.00",
+      "purchases_total": "0.00",
+      "net_tax": "0.00"
+    },
+    "lambert": {
+      "sales_base": "902247.40",
+      "sales_tax": "135337.11",
+      "sales_total": "1037584.51",
+      "purchases_base": "706149.79",
+      "purchases_tax": "105922.47",
+      "purchases_total": "812072.26",
+      "net_tax": "29414.64"
+    },
+    "riyadh_hotel": {
+      "sales_base": "269738.27",
+      "sales_tax": "40460.74",
+      "sales_total": "310199.01",
+      "purchases_base": "586227.73",
+      "purchases_tax": "87934.16",
+      "purchases_total": "674161.89",
+      "net_tax": "-47473.42"
+    },
+    "riyadh_cafe": {
+      "sales_base": "0.00",
+      "sales_tax": "0.00",
+      "sales_total": "0.00",
+      "purchases_base": "0.00",
+      "purchases_tax": "0.00",
+      "purchases_total": "0.00",
+      "net_tax": "0.00"
+    },
+    "jeddah_hotel": {
+      "sales_base": "602318.53",
+      "sales_tax": "90347.78",
+      "sales_total": "692666.31",
+      "purchases_base": "75320.93",
+      "purchases_tax": "11298.14",
+      "purchases_total": "86619.07",
+      "net_tax": "79049.64"
+    },
+    "jeddah_cafe": {
+      "sales_base": "30190.60",
+      "sales_tax": "4528.59",
+      "sales_total": "34719.19",
+      "purchases_base": "44601.13",
+      "purchases_tax": "6690.17",
+      "purchases_total": "51291.30",
+      "net_tax": "-2161.58"
+    },
+    "trading_steel": {
+      "sales_base": "393256.53",
+      "sales_tax": "58988.48",
+      "sales_total": "452245.01",
+      "purchases_base": "376695.20",
+      "purchases_tax": "56504.28",
+      "purchases_total": "433199.48",
+      "net_tax": "2484.20"
+    },
+    "laundry": {
+      "sales_base": "0.00",
+      "sales_tax": "0.00",
+      "sales_total": "0.00",
+      "purchases_base": "0.00",
+      "purchases_tax": "0.00",
+      "purchases_total": "0.00",
+      "net_tax": "0.00"
+    },
+    "engineering_office": {
+      "sales_base": "0.00",
+      "sales_tax": "0.00",
+      "sales_total": "0.00",
+      "purchases_base": "0.00",
+      "purchases_tax": "0.00",
+      "purchases_total": "0.00",
+      "net_tax": "0.00"
+    },
+    "market_cafe": {
+      "sales_base": "0.00",
+      "sales_tax": "0.00",
+      "sales_total": "0.00",
+      "purchases_base": "0.00",
+      "purchases_tax": "0.00",
+      "purchases_total": "0.00",
+      "net_tax": "0.00"
+    },
+    "market_cafe_2": {
+      "sales_base": "0.00",
+      "sales_tax": "0.00",
+      "sales_total": "0.00",
+      "purchases_base": "0.00",
+      "purchases_tax": "0.00",
+      "purchases_total": "0.00",
+      "net_tax": "0.00"
+    }
+  },
+  "year": "2025",
+  "quarter": "2",
+  "generated_at": "2025-10-18",
+  "tax_number": "302255129500003"
+}
+
