@@ -681,10 +681,41 @@
                 // Merge inputs
                 const inputsToRestore = data.inputs || data.mainInputs;
                 if (inputsToRestore) {
-                    for (const id in inputsToRestore) {
+                    // Check if nested format (factory: {sales_base: ...})
+                    const firstKey = Object.keys(inputsToRestore)[0];
+                    const isNestedFormat = firstKey && typeof inputsToRestore[firstKey] === 'object' && !Array.isArray(inputsToRestore[firstKey]);
+                    
+                    if (isNestedFormat) {
+                        // Convert nested format to flat format
+                        for (const entityKey in inputsToRestore) {
+                            const entityData = inputsToRestore[entityKey];
+                            if (typeof entityData === 'object') {
+                                for (const fieldKey in entityData) {
+                                    const flatId = `${entityKey}-${fieldKey}`.replace(/_/g, '-');
+                                    const input = document.getElementById(flatId);
+                                    if (input && (!input.value || input.value === '0.00' || input.value === '')) {
+                                        input.value = entityData[fieldKey];
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Flat format
+                        for (const id in inputsToRestore) {
+                            const input = document.getElementById(id);
+                            if (input && (!input.value || input.value === '0.00' || input.value === '')) {
+                                input.value = inputsToRestore[id];
+                            }
+                        }
+                    }
+                }
+                
+                // Merge return data
+                if (data.return) {
+                    for (const id in data.return) {
                         const input = document.getElementById(id);
                         if (input && (!input.value || input.value === '0.00' || input.value === '')) {
-                            input.value = inputsToRestore[id];
+                            input.value = data.return[id];
                         }
                     }
                 }
