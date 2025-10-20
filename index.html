@@ -25,7 +25,7 @@
         .content-pane { background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
         .table thead th { color: var(--color-text-secondary); border-bottom: 2px solid var(--color-border); text-align: center; vertical-align: middle; }
         .table tbody td { border-color: var(--color-border); vertical-align: middle; text-align: center; }
-        .table input { background-color: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-primary); text-align: center; border-radius: 4px; padding: 0.5rem; width: 100%; }
+        .table input { background-color: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-primary); text-align: center; border-radius: 4px; padding: 0.5rem; width: 100%; min-width: 120px; font-size: 14px; }
         .table input:disabled { background-color: rgba(13, 17, 23, 0.5); cursor: not-allowed; }
         .table .entity-row { background-color: rgba(56, 139, 253, 0.1); font-weight: bold; }
         .table .sub-item-row td:first-child { padding-right: 2rem !important; text-align: right; }
@@ -450,8 +450,8 @@
                     
                     let row = settlementBody.insertRow();
                     row.innerHTML = `
-                        <td>من حـ/ جاري مدين (${debtor.name})</td>
-                        <td>إلى حـ/ جاري دائن (${creditor.name})</td>
+                        <td>من حـ/ جاري مدين بنك ${debtor.name}</td>
+                        <td>إلى حـ/ جاري دائن بنك ${creditor.name}</td>
                         <td>${formatCurrency(settlementAmount)}</td>
                         <td>تسوية رصيد ${creditor.name} الدائن</td>
                     `;
@@ -470,7 +470,7 @@
             let finalRow = settlementBody.insertRow();
             finalRow.innerHTML = `
                 <td class="fw-bold">من حـ/ هيئة الزكاة والضريبة والجمارك</td>
-                <td class="fw-bold">إلى حـ/ البنك أو الصندوق (${mainPayer.name})</td>
+                <td class="fw-bold">إلى حـ/ بنك ${mainPayer.name}</td>
                 <td class="fw-bold">${formatCurrency(netGroupDue)}</td>
                 <td class="fw-bold">سداد صافي الضريبة المستحقة للمجموعة</td>
             `;
@@ -755,7 +755,10 @@
             <div class="control-bar">
                 <div class="pane-title">${name}</div>
                 <div>الرقم الضريبي: <span class="fw-bold">${vat}</span></div>
-                <button class="btn btn-sm btn-outline-danger" onclick="document.getElementById('${newCard.id}').remove(); calculateAll();"><i class="fas fa-trash-alt"></i></button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="printContent('input_table_${entityId}')"><i class="fas fa-print me-1"></i>طباعة</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="document.getElementById('${newCard.id}').remove(); calculateAll();"><i class="fas fa-trash-alt"></i></button>
+                </div>
             </div>
             <div class="table-responsive" data-print-section="input_table_${entityId}">
                 <table class="table table-bordered vat-input-table">
