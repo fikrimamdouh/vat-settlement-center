@@ -322,10 +322,29 @@
             const mainSales = parseFloatOrZero(groupRow.querySelector('[data-type="sales"][data-field="base"]').value);
             const mainPurchases = parseFloatOrZero(groupRow.querySelector('[data-type="purchases"][data-field="base"]').value);
 
-            if (logic === 'flexible' && (mainSales > 0 || mainPurchases > 0)) {
-                // User entered data in the main row, it's the source of truth.
+            if (logic === 'flexible') {
+                // For flexible logic: check each field independently
+                // If sales is empty, sum from sub-items; if purchases is empty, sum from sub-items
+                let totals = { sales_base: 0, sales_vat: 0, sales_total: 0, purchases_base: 0, purchases_vat: 0, purchases_total: 0 };
+                document.querySelectorAll(`.sub-item-row[data-parent-id="${parentId}"]`).forEach(subRow => {
+                    for (const key in totals) {
+                        const [type, field] = key.split('_');
+                        totals[key] += parseFloatOrZero(subRow.querySelector(`[data-type="${type}"][data-field="${field}"]`).value);
+                    }
+                });
+                
+                // Update only the fields that are empty (0)
+                for (const key in totals) {
+                    const [type, field] = key.split('_');
+                    const currentValue = parseFloatOrZero(groupRow.querySelector(`[data-type="${type}"][data-field="${field}"]`).value);
+                    if (currentValue === 0) {
+                        // Field is empty, use the sum from sub-items
+                        groupRow.querySelector(`[data-type="${type}"][data-field="${field}"]`).value = formatCurrency(totals[key]);
+                    }
+                    // If currentValue > 0, keep the user-entered value as is
+                }
             } else {
-                // Sum up sub-items for strict groups OR for flexible groups that are empty.
+                // For strict logic: always sum up sub-items
                 let totals = { sales_base: 0, sales_vat: 0, sales_total: 0, purchases_base: 0, purchases_vat: 0, purchases_total: 0 };
                 document.querySelectorAll(`.sub-item-row[data-parent-id="${parentId}"]`).forEach(subRow => {
                     for (const key in totals) {
